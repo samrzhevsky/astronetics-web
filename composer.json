@@ -1,0 +1,14 @@
+{
+    "name": "samrzhevsky/sevsu-ittik-web",
+    "type": "project",
+    "authors": [
+        {
+            "name": "Sam Rzhevsky",
+            "homepage": "https://samrzhevsky.ru",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "catfan/medoo": "^2.1"
+    }
+}
