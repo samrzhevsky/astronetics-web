@@ -1,19 +1,13 @@
 <?php
 
 error_reporting(E_ALL);
+header('Content-type: application/json');
 
 require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/utils.class.php';
 
 $config = require __DIR__ . '/config.php';
 $db = new Medoo\Medoo($config['db']);
-
-function isValidJSON($str)
-{
-    json_decode($str);
-    return json_last_error() === JSON_ERROR_NONE;
-}
-
-header('Content-type: application/json');
 
 if (!isset($_GET['action'])) {
     exit(json_encode(['status' => 0, 'error' => 'Empty action']));
@@ -165,7 +159,7 @@ elseif ($_GET['action'] === 'regenerateTest') {
 // Отправка своих ответов на проверку
 elseif ($_GET['action'] === 'checkAnswers') {
     $jsonParams = file_get_contents('php://input');
-    if (strlen($jsonParams) === 0 || !isValidJSON($jsonParams)) {
+    if (strlen($jsonParams) === 0 || !Utils::isValidJSON($jsonParams)) {
         exit(json_encode(['status' => 0, 'error' => 'Invalid data']));
     }
     $decodedParams = json_decode($jsonParams, true);
@@ -248,7 +242,7 @@ elseif ($_GET['action'] === 'getProfile') {
 // изменение фио
 elseif ($_GET['action'] === 'editProfile') {
     $jsonParams = file_get_contents('php://input');
-    if (strlen($jsonParams) === 0 || !isValidJSON($jsonParams)) {
+    if (strlen($jsonParams) === 0 || !Utils::isValidJSON($jsonParams)) {
         exit(json_encode(['status' => 0, 'error' => 'Invalid data']));
     }
     $decodedParams = json_decode($jsonParams, true);
