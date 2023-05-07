@@ -59,7 +59,7 @@ if ($cert['saved']) {// если сертификат уже нарисован,
 
     // Вывод уникального кода
     $font_size = 20;
-    $text_x = 1250;
+    $text_x = 1235;
     $text_y = 1150;
     Utils::addTextToImage($image, $cert['unique_id'], $font, $font_size, $text_x, $text_y);
 
