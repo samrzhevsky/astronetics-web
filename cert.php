@@ -70,5 +70,5 @@ if ($user['cert_saved']) {// если сертификат уже нарисов
     imagepng($image, __DIR__ . '/certs/' . $user['cert_id'] . '.png');
     imagedestroy($image);
 
-    $db->update('user', ['cert_saved' => 1], ['id' => $user['id']]);
+    $db->update('users', ['cert_saved' => 1], ['id' => $user['id']]);
 }
