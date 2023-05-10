@@ -203,10 +203,9 @@ elseif ($_GET['action'] === 'checkAnswers') {
 
         // если пользователь прошёл все тесты, то рисуем ему сертификат
         if (!$db->has('tests', ['user_id' => $user['id'], 'OR' => ['completed' => 0, 'result[<]' => $config['passingScore']]])) {
-            $db->insert('certificates', [
-                'user_id' => $user['id'],
-                'unique_id' => mb_strtoupper(bin2hex(random_bytes(10)))
-            ]);
+            $db->update('users', [
+                'cert_id' => mb_strtoupper(bin2hex(random_bytes(10)))
+            ], ['id' => $user['id']]);
 
             $response['cert'] = true;
             $response['need_fill_profile'] = is_null($user['firstname']) || is_null($user['lastname']);
@@ -290,7 +289,7 @@ elseif ($_GET['action'] === 'editProfile') {
 
 // получение рейтинга пользователя
 elseif ($_GET['action'] === 'getRating') {
-    if (!$user = $db->get('users', ['id[Int]', 'firstname', 'lastname'], ['uuid' => $_GET['user_id']])) {
+    if (!$user = $db->get('users', ['id[Int]', 'firstname', 'lastname', 'cert_id', 'cert_saved[Bool]'], ['uuid' => $_GET['user_id']])) {
         exit(json_encode(['status' => 0, 'error' => 'Для отображения рейтинга необходимо пройти хотя бы один тест']));
     }
 
@@ -310,13 +309,12 @@ elseif ($_GET['action'] === 'getRating') {
         exit(json_encode(['status' => 0, 'error' => 'Для отображения рейтинга необходимо пройти хотя бы один тест']));
     }
 
-    $cert = $db->get('certificates', ['unique_id'], ['user_id' => $user['id']]);
-
     exit(json_encode([
         'status' => 1,
         'score' => $myRatingScore,
         'better' => ((count($usersRating) - $myRatingPosition) / count($usersRating)) * 100,
-        'cert_url' => isset($cert['unique_id']) ? ($config['certDownloadUrl'] . $cert['unique_id']) : '',
+        'cert_url' => isset($user['cert_id']) ? ($config['certDownloadUrl'] . $user['cert_id']) : '',
+        'cert_saved' => $user['cert_saved'],
         'profile_filled' => !is_null($user['firstname']) && !is_null($user['lastname']),
         'total_tests' => $db->count('tests', ['user_id' => $user['id']]),
         'passed_tests' => $db->count('tests', ['user_id' => $user['id'], 'completed' => 1, 'result[>=]' => $config['passingScore']])
