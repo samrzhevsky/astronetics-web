@@ -27,16 +27,16 @@ if ($user['cert_saved']) {// если сертификат уже нарисов
     $font = __DIR__ . '/assets/Garet-Book.ttf';
 
     // Вывод ФИО
-    $fio = ucfirst($user['lastname']) . ' ' . ucfirst($user['firstname']);
+    $fullName = ucfirst($user['lastname']) . ' ' . ucfirst($user['firstname']);
     if (!is_null($user['midname'])) {
-        $fio .= ' ' . ucfirst($user['midname']);
+        $fullName .= ' ' . ucfirst($user['midname']);
     }
 
     $font_size = 60;
-    $text_size = imagettfbbox($font_size, 0, $font, $fio);
+    $text_size = imagettfbbox($font_size, 0, $font, $fullName);
     $text_x = floor((imagesx($image) - $text_size[2] - 10) / 2);
     $text_y = floor((imagesy($image) - $text_size[3] + 60) / 2);
-    Utils::addTextToImage($image, $fio, $font, $font_size, $text_x, $text_y);
+    Utils::addTextToImage($image, $fullName, $font, $font_size, $text_x, $text_y);
 
 
     // Вывод суммы баллов

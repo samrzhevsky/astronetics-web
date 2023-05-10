@@ -289,7 +289,7 @@ elseif ($_GET['action'] === 'editProfile') {
 
 // получение рейтинга пользователя
 elseif ($_GET['action'] === 'getRating') {
-    if (!$user = $db->get('users', ['id[Int]', 'firstname', 'lastname', 'cert_id', 'cert_saved[Bool]'], ['uuid' => $_GET['user_id']])) {
+    if (!$user = $db->get('users', ['id[Int]', 'firstname', 'lastname', 'midname', 'cert_id', 'cert_saved[Bool]'], ['uuid' => $_GET['user_id']])) {
         exit(json_encode(['status' => 0, 'error' => 'Для отображения рейтинга необходимо пройти хотя бы один тест']));
     }
 
@@ -309,13 +309,20 @@ elseif ($_GET['action'] === 'getRating') {
         exit(json_encode(['status' => 0, 'error' => 'Для отображения рейтинга необходимо пройти хотя бы один тест']));
     }
 
+    $isProfileFilled = !is_null($user['firstname']) && !is_null($user['lastname']);
+    $fullName = $isProfileFilled ? (ucfirst($user['lastname']) . ' ' . ucfirst($user['firstname'])) : '';
+    if ($isProfileFilled && !is_null($user['midname'])) {
+        $fullName .= ' ' . ucfirst($user['midname']);
+    }
+
     exit(json_encode([
         'status' => 1,
         'score' => $myRatingScore,
         'better' => ((count($usersRating) - $myRatingPosition) / count($usersRating)) * 100,
         'cert_url' => isset($user['cert_id']) ? ($config['certDownloadUrl'] . $user['cert_id']) : '',
         'cert_saved' => $user['cert_saved'],
-        'profile_filled' => !is_null($user['firstname']) && !is_null($user['lastname']),
+        'profile_filled' => $isProfileFilled,
+        'full_name' => $fullName,
         'total_tests' => $db->count('tests', ['user_id' => $user['id']]),
         'passed_tests' => $db->count('tests', ['user_id' => $user['id'], 'completed' => 1, 'result[>=]' => $config['passingScore']])
     ]));
