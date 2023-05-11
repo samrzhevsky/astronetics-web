@@ -226,7 +226,7 @@ elseif ($_GET['action'] === 'checkAnswers') {
 }
 
 elseif ($_GET['action'] === 'getProfile') {
-    if (!$user = $db->get('users', ['firstname', 'lastname', 'midname'], ['uuid' => $_GET['user_id']])) {
+    if (!$user = $db->get('users', ['firstname', 'lastname', 'midname', 'cert_saved[Bool]'], ['uuid' => $_GET['user_id']])) {
         exit(json_encode(['status' => 0, 'error' => 'User not found']));
     }
 
@@ -234,7 +234,8 @@ elseif ($_GET['action'] === 'getProfile') {
         'status' => 1,
         'firstname' => $user['firstname'] ?? '',
         'lastname' => $user['lastname'] ?? '',
-        'midname' => $user['midname'] ?? ''
+        'midname' => $user['midname'] ?? '',
+        'cert_saved' => $user['cert_saved']
     ]));
 }
 
@@ -252,8 +253,10 @@ elseif ($_GET['action'] === 'editProfile') {
         exit(json_encode(['status' => 0, 'error' => 'Empty lastname']));
     } elseif (!isset($decodedParams['midname'])) {
         exit(json_encode(['status' => 0, 'error' => 'Empty midname']));
-    } elseif (!$user = $db->get('users', ['id[Int]'], ['uuid' => $_GET['user_id']])) {
+    } elseif (!$user = $db->get('users', ['id[Int]', 'cert_saved[Bool]'], ['uuid' => $_GET['user_id']])) {
         exit(json_encode(['status' => 0, 'error' => 'User not found']));
+    } elseif ($user['cert_saved']) {
+        exit(json_encode(['status' => 0, 'error' => 'Изменение ФИО недоступно']));
     }
 
     $firstname = trim($decodedParams['firstname']);
