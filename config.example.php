@@ -43,5 +43,15 @@ return [
 	/**
 	 * Откуда скачивать сертификат
 	 */
-	'certDownloadUrl' => 'https://astronetics.local/cert.php?id='
+	'certDownloadUrl' => 'https://astronetics.local/cert.php?id=',
+
+	/**
+	 * Время между запросами к getTests от нового пользователя (сек)
+	 */
+	'requestTimeInterval' => 30,
+
+	/**
+	 * Максимальное количество запросов за requestTimeInterval от одного пользователя
+	 */
+	'requestMax' => 2
 ];

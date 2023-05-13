@@ -18,6 +18,34 @@ if (!isset($_GET['action'])) {
 // Получение списка всех тестов пользователя
 elseif ($_GET['action'] === 'getTests') {
     if (!$user = $db->get('users', ['id[Int]'], ['uuid' => $_GET['user_id']])) {
+        // ограничение количества запросов от новых пользователей
+        $userIp = Utils::getIp();
+        $reqLimit = $db->get('request_limit', ['id[Int]', 'last_request[Int]', 'request_count[Int]'], ['ip' => $userIp]);
+
+        if (!$reqLimit) {
+            // новый запрос
+            $db->insert('request_limit', [
+                'ip' => $userIp,
+                'last_request' => time(),
+                'request_count' => 1
+            ]);
+        } elseif (($reqLimit['last_request'] > (time() - $time_interval)) && ($reqLimit['request_count'] < $max_requests)) {
+            // запрос проходит по количеству запросов/время
+            $db->update('request_limit', ['request_count[+]' => 1], ['id' => $reqLimit['id']]);
+        } elseif ($reqLimit['last_request'] > (time() - $time_interval)) {
+            // запрос не прошёл по количеству запросов/время. Отсекаем его
+            exit(json_encode(['status' => 0, 'error' => 'Повторите попытку позже']));
+        } else {
+            $db->update('request_limit', [
+                'last_request' => time(),
+                'request_count' => 1
+            ], ['id' => $reqLimit['id']]);
+        }
+
+        // очистка старых записей
+        $db->delete('request_limit', ['last_request[<]' => time() - (3 * 3600)]);
+        // ---
+
         $db->insert('users', ['uuid' => $_GET['user_id']]);
         if (!$user = $db->get('users', ['id[Int]'], ['id' => $db->id()])) {
             exit(json_encode(['status' => 0, 'error' => 'User not found']));
@@ -25,10 +53,6 @@ elseif ($_GET['action'] === 'getTests') {
 
         // генерация тестов к каждому разделу
         foreach ($config['categoriesId'] as $categoryId) {
-            if (is_null($category)) {
-                continue;
-            }
-
             $questions = $db->select('questions', 'id[Int]', ['category' => $categoryId]);
             if (count($questions) < $config['questionsInTest']) {
                 continue;
