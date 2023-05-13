@@ -29,10 +29,10 @@ elseif ($_GET['action'] === 'getTests') {
                 'last_request' => time(),
                 'request_count' => 1
             ]);
-        } elseif (($reqLimit['last_request'] > (time() - $time_interval)) && ($reqLimit['request_count'] < $max_requests)) {
+        } elseif (($reqLimit['last_request'] > (time() - $config['requestTimeInterval'])) && ($reqLimit['request_count'] < $config['requestMax'])) {
             // запрос проходит по количеству запросов/время
             $db->update('request_limit', ['request_count[+]' => 1], ['id' => $reqLimit['id']]);
-        } elseif ($reqLimit['last_request'] > (time() - $time_interval)) {
+        } elseif ($reqLimit['last_request'] > (time() - $config['requestTimeInterval'])) {
             // запрос не прошёл по количеству запросов/время. Отсекаем его
             exit(json_encode(['status' => 0, 'error' => 'Повторите попытку позже']));
         } else {
