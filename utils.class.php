@@ -8,7 +8,8 @@ class Utils
         return json_last_error() === JSON_ERROR_NONE;
     }
 
-    public static function declension(int $number, string $declension1, string $declension3, string $declension5): string {
+    public static function declension(int $number, string $declension1, string $declension3, string $declension5): string
+    {
         $result = '';
         $count = $number % 100;
 
@@ -28,8 +29,27 @@ class Utils
         return $result;
     }
 
-    public static function addTextToImage(GdImage $image, string $text, string $font, int $font_size, int $text_x, int $text_y): array|false {
+    public static function addTextToImage(GdImage $image, string $text, string $font, int $font_size, int $text_x, int $text_y): array|false
+    {
         $font_color = imagecolorallocate($image, 0, 0, 0);
         return imagefttext($image, $font_size, 0, $text_x, $text_y, $font_color, $font, $text);
+    }
+
+    public static function getIp()
+    {
+        $keys = [
+            'HTTP_CLIENT_IP',
+            'HTTP_X_FORWARDED_FOR',
+            'REMOTE_ADDR'
+        ];
+        foreach ($keys as $key) {
+            if (!empty($_SERVER[$key])) {
+                $t = explode(',', $_SERVER[$key]);
+                $ip = trim(end($t));
+                if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                    return $ip;
+                }
+            }
+        }
     }
 }
