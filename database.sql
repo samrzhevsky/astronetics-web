@@ -16,6 +16,13 @@ CREATE TABLE `questions` (
   `correct_answer` tinyint(1) UNSIGNED NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+CREATE TABLE `request_limit` (
+  `id` int(11) NOT NULL,
+  `ip` varchar(40) NOT NULL,
+  `last_request` int(11) UNSIGNED NOT NULL,
+  `request_count` int(11) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 CREATE TABLE `tests` (
   `id` int(11) UNSIGNED NOT NULL,
   `user_id` int(11) UNSIGNED DEFAULT NULL,
@@ -46,6 +53,9 @@ CREATE TABLE `users` (
 ALTER TABLE `questions`
   ADD PRIMARY KEY (`id`);
 
+ALTER TABLE `request_limit`
+  ADD PRIMARY KEY (`id`);
+
 ALTER TABLE `tests`
   ADD PRIMARY KEY (`id`);
 
@@ -56,6 +66,9 @@ ALTER TABLE `users`
 
 ALTER TABLE `questions`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `request_limit`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 ALTER TABLE `tests`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT;
