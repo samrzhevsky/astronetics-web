@@ -23,7 +23,7 @@ return [
 	/**
 	 * Список id категорий
 	 */
-	'categoriesId' => [1, 2, 3, 4, 5, 6],
+	'categoriesId' => [1, 2, 3, 4, 5],
 
 	/**
 	 * Тайм-аут между прохождениями одного теста
@@ -44,6 +44,11 @@ return [
 	 * Откуда скачивать сертификат
 	 */
 	'certDownloadUrl' => 'https://astronetics.local/cert.php?id=',
+
+	/**
+	 * Откуда скачивать последнюю версию приложения
+	 */
+	'updateDownloadUrl' => 'https://astronetics.local/release/astronetics.apk',
 
 	/**
 	 * Время между запросами к getTests от нового пользователя (сек)
