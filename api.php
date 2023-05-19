@@ -355,4 +355,19 @@ elseif ($_GET['action'] === 'getRating') {
     ]));
 }
 
+// Проверка наличия обновлений
+elseif ($_GET['action'] === 'checkForUpdates') {
+    if (!isset($_GET['current']) || $_GET['current'] < 1) {
+        exit(json_encode(['status' => 0, 'Empty or invalid current']));
+    }
+
+    $hasUpdates = $db->has('version', ['version[>]' => $_GET['current']]);
+
+    exit(json_encode([
+        'status' => 1,
+        'has_updates' => $hasUpdates,
+        'download_url' => $hasUpdates ? $config['updateDownloadUrl'] : ''
+    ]));
+}
+
 exit(json_encode(['status' => 0, 'error' => 'Unknown action: ' . $_GET['action']]));
