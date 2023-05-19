@@ -49,6 +49,11 @@ CREATE TABLE `users` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+CREATE TABLE `version` (
+  `version` int(11) UNSIGNED NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 
 ALTER TABLE `questions`
   ADD PRIMARY KEY (`id`);
@@ -62,6 +67,9 @@ ALTER TABLE `tests`
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uuid` (`uuid`);
+
+ALTER TABLE `version`
+  ADD PRIMARY KEY (`version`);
 
 
 ALTER TABLE `questions`
