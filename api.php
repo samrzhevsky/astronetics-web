@@ -225,10 +225,11 @@ elseif ($_GET['action'] === 'checkAnswers') {
     } else {
         $lockTime = -1;
 
-        // если пользователь прошёл все тесты, то рисуем ему сертификат
-        if (!$db->has('tests', ['user_id' => $user['id'], 'OR' => ['completed' => 0, 'result[<]' => $config['passingScore']]])) {
+        // если пользователь прошёл все тесты (отправляемый - последний), то рисуем ему сертификат
+        if ($db->count('tests', ['user_id' => $user['id'], 'OR' => ['completed' => 0, 'result[<]' => $config['passingScore']]]) === 1) {
             $db->update('users', [
-                'cert_id' => mb_strtoupper(bin2hex(random_bytes(10)))
+                'cert_id' => mb_strtoupper(bin2hex(random_bytes(10))),
+                'cert_date' => $db->raw('CURRENT_TIMESTAMP()')
             ], ['id' => $user['id']]);
 
             $response['cert'] = true;
