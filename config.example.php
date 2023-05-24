@@ -48,7 +48,7 @@ return [
 	/**
 	 * Откуда скачивать последнюю версию приложения
 	 */
-	'updateDownloadUrl' => 'https://ittik.local/release/astronetics.apk',
+	'updateDownloadUrl' => 'https://ittik.local/release/astronetics.apk?cv=',
 
 	/**
 	 * Время между запросами к getTests от нового пользователя (сек)
