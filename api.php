@@ -367,7 +367,7 @@ elseif ($_GET['action'] === 'checkForUpdates') {
     exit(json_encode([
         'status' => 1,
         'has_updates' => $hasUpdates,
-        'download_url' => $hasUpdates ? $config['updateDownloadUrl'] : ''
+        'download_url' => $hasUpdates ? $config['updateDownloadUrl'] . ((int) $_GET['current']) : ''
     ]));
 }
 

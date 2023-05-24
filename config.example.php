@@ -48,7 +48,7 @@ return [
 	/**
 	 * Откуда скачивать последнюю версию приложения
 	 */
-	'updateDownloadUrl' => 'https://astronetics.local/release/astronetics.apk',
+	'updateDownloadUrl' => 'https://astronetics.local/release/astronetics.apk?cv=',
 
 	/**
 	 * Время между запросами к getTests от нового пользователя (сек)
