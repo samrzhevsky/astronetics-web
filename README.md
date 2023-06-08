@@ -8,3 +8,10 @@
 - Nginx 1.18
 
 Код мобильного приложения расположен в репозитории: <https://github.com/samrzhevsky/astronetics>
+
+## Инструкция по установке
+- Для запуска необходимы composer, PHP и MariaDB/MySQL
+- Клонировать репозиторий в директорию веб-сервера
+- Выполнить команду `composer install`
+- Импортировать `database.sql`
+- Переименовать `config.example.php` в `config.php` с указанием своих данных
