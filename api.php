@@ -11,70 +11,14 @@ $db = new Medoo\Medoo($config['db']);
 
 if (!isset($_GET['action'])) {
     exit(json_encode(['status' => 0, 'error' => 'Empty action']));
-} elseif (!isset($_GET['user_id']) || !preg_match('/^[0-9a-fA-F]{16}$/', $_GET['user_id'])) {
-    exit(json_encode(['status' => 0, 'error' => 'Empty or invalid user_id']));
+} elseif ($_GET['action'] !== 'exchange' && (!isset($_GET['token']) || !preg_match('/^[0-9a-fA-F]{32}$/', $_GET['token']))) {
+    exit(json_encode(['status' => 0, 'error' => 'Empty or invalid token']));
 }
 
 // Получение списка всех тестов пользователя
 elseif ($_GET['action'] === 'getTests') {
-    if (!$user = $db->get('users', ['id[Int]'], ['uuid' => $_GET['user_id']])) {
-        // ограничение количества запросов от новых пользователей
-        $userIp = Utils::getIp();
-        $reqLimit = $db->get('request_limit', ['id[Int]', 'last_request[Int]', 'request_count[Int]'], ['ip' => $userIp]);
-
-        if (!$reqLimit) {
-            // новый запрос
-            $db->insert('request_limit', [
-                'ip' => $userIp,
-                'last_request' => time(),
-                'request_count' => 1
-            ]);
-        } elseif (($reqLimit['last_request'] > (time() - $config['requestTimeInterval'])) && ($reqLimit['request_count'] < $config['requestMax'])) {
-            // запрос проходит по количеству запросов/время
-            $db->update('request_limit', ['request_count[+]' => 1], ['id' => $reqLimit['id']]);
-        } elseif ($reqLimit['last_request'] > (time() - $config['requestTimeInterval'])) {
-            // запрос не прошёл по количеству запросов/время. Отсекаем его
-            exit(json_encode(['status' => 0, 'error' => 'Повторите попытку позже']));
-        } else {
-            $db->update('request_limit', [
-                'last_request' => time(),
-                'request_count' => 1
-            ], ['id' => $reqLimit['id']]);
-        }
-
-        // очистка старых записей
-        $db->delete('request_limit', ['last_request[<]' => time() - (3 * 3600)]);
-        // ---
-
-        $db->insert('users', ['uuid' => $_GET['user_id']]);
-        if (!$user = $db->get('users', ['id[Int]'], ['id' => $db->id()])) {
-            exit(json_encode(['status' => 0, 'error' => 'User not found']));
-        }
-
-        // генерация тестов к каждому разделу
-        foreach ($config['categoriesId'] as $categoryId) {
-            $questions = $db->select('questions', 'id[Int]', ['category' => $categoryId]);
-            if (count($questions) < $config['questionsInTest']) {
-                continue;
-            }
-
-            $questionIds = [];
-            for ($i = 0; $i < $config['questionsInTest']; ++$i) {
-                $questionId = -1;
-
-                do {
-                    $questionId = $questions[array_rand($questions)];
-                } while (in_array($questionId, $questionIds));
-
-                $questionIds[] = $questionId;
-            }
-
-            $db->insert('tests', [
-                'user_id' => $user['id'],
-                'category' => $categoryId,
-                'questions' => json_encode($questionIds)
-            ]);
-        }
+    if (!$user = $db->get('users', ['id[Int]'], ['token' => $_GET['token']])) {
+        exit(json_encode(['status' => 0, 'error' => 'User not found']));
     }
 
     $tests = $db->select('tests', ['id[Int]', 'category[Int]', 'completed[Bool]', 'result[Int]', 'locked_until[Int]'], ['user_id' => $user['id']]);
@@ -86,7 +30,7 @@ elseif ($_GET['action'] === 'getTests') {
 elseif ($_GET['action'] === 'getTestById') {
     if (!isset($_GET['test_id'])) {
         exit(json_encode(['status' => 0, 'error' => 'Empty test_id']));
-    } elseif (!$user = $db->get('users', ['id[Int]'], ['uuid' => $_GET['user_id']])) {
+    } elseif (!$user = $db->get('users', ['id[Int]'], ['token' => $_GET['token']])) {
         exit(json_encode(['status' => 0, 'error' => 'User not found']));
     } elseif (!$test = $db->get('tests', ['id[Int]', 'category[Int]', 'questions[JSON]', 'answers[JSON]', 'completed[Bool]', 'result[Int]', 'locked_until[Int]'], ['user_id' => $user['id'], 'id' => $_GET['test_id']])) {
         exit(json_encode(['status' => 0, 'error' => 'Test not found']));
@@ -142,7 +86,7 @@ elseif ($_GET['action'] === 'getTestById') {
 elseif ($_GET['action'] === 'regenerateTest') {
     if (!isset($_GET['test_id'])) {
         exit(json_encode(['status' => 0, 'error' => 'Empty test_id']));
-    } elseif (!$user = $db->get('users', ['id[Int]'], ['uuid' => $_GET['user_id']])) {
+    } elseif (!$user = $db->get('users', ['id[Int]'], ['token' => $_GET['token']])) {
         exit(json_encode(['status' => 0, 'error' => 'User not found']));
     } elseif (!$test = $db->get('tests', ['id[Int]', 'category[Int]', 'completed[Bool]', 'locked_until[Int]'], ['user_id' => $user['id'], 'id' => $_GET['test_id']])) {
         exit(json_encode(['status' => 0, 'error' => 'Test not found']));
@@ -192,7 +136,7 @@ elseif ($_GET['action'] === 'checkAnswers') {
         exit(json_encode(['status' => 0, 'error' => 'Empty test_id']));
     } elseif (!isset($decodedParams['answers']) || count($decodedParams['answers']) === 0) {
         exit(json_encode(['status' => 0, 'error' => 'Empty answers']));
-    } elseif (!$user = $db->get('users', ['id[Int]', 'firstname', 'lastname'], ['uuid' => $_GET['user_id']])) {
+    } elseif (!$user = $db->get('users', ['id[Int]', 'firstname', 'lastname'], ['token' => $_GET['token']])) {
         exit(json_encode(['status' => 0, 'error' => 'User not found']));
     } elseif (!$test = $db->get('tests', ['questions[JSON]', 'completed[Bool]'], ['user_id' => $user['id'], 'id' => $decodedParams['test_id']])) {
         exit(json_encode(['status' => 0, 'error' => 'Тест не найден']));
@@ -251,7 +195,7 @@ elseif ($_GET['action'] === 'checkAnswers') {
 }
 
 elseif ($_GET['action'] === 'getProfile') {
-    if (!$user = $db->get('users', ['firstname', 'lastname', 'midname', 'cert_saved[Bool]'], ['uuid' => $_GET['user_id']])) {
+    if (!$user = $db->get('users', ['firstname', 'lastname', 'midname', 'cert_saved[Bool]'], ['token' => $_GET['token']])) {
         exit(json_encode(['status' => 0, 'error' => 'User not found']));
     }
 
@@ -278,7 +222,7 @@ elseif ($_GET['action'] === 'editProfile') {
         exit(json_encode(['status' => 0, 'error' => 'Empty lastname']));
     } elseif (!isset($decodedParams['midname'])) {
         exit(json_encode(['status' => 0, 'error' => 'Empty midname']));
-    } elseif (!$user = $db->get('users', ['id[Int]', 'cert_saved[Bool]'], ['uuid' => $_GET['user_id']])) {
+    } elseif (!$user = $db->get('users', ['id[Int]', 'cert_saved[Bool]'], ['token' => $_GET['token']])) {
         exit(json_encode(['status' => 0, 'error' => 'User not found']));
     } elseif ($user['cert_saved']) {
         exit(json_encode(['status' => 0, 'error' => 'Изменение ФИО недоступно']));
@@ -317,7 +261,7 @@ elseif ($_GET['action'] === 'editProfile') {
 
 // получение рейтинга пользователя
 elseif ($_GET['action'] === 'getRating') {
-    if (!$user = $db->get('users', ['id[Int]', 'firstname', 'lastname', 'midname', 'cert_id', 'cert_saved[Bool]'], ['uuid' => $_GET['user_id']])) {
+    if (!$user = $db->get('users', ['id[Int]', 'firstname', 'lastname', 'midname', 'cert_id', 'cert_saved[Bool]'], ['token' => $_GET['token']])) {
         exit(json_encode(['status' => 0, 'error' => 'Для отображения рейтинга необходимо пройти хотя бы один тест']));
     }
 
@@ -360,6 +304,8 @@ elseif ($_GET['action'] === 'getRating') {
 elseif ($_GET['action'] === 'checkForUpdates') {
     if (!isset($_GET['current']) || $_GET['current'] < 1) {
         exit(json_encode(['status' => 0, 'Empty or invalid current']));
+    } elseif (!$db->has('users', ['token' => $_GET['token']])) {
+        exit(json_encode(['status' => 0, 'error' => 'User not found']));
     }
 
     $hasUpdates = $db->has('version', ['version[>]' => $_GET['current']]);
@@ -369,6 +315,143 @@ elseif ($_GET['action'] === 'checkForUpdates') {
         'has_updates' => $hasUpdates,
         'download_url' => $hasUpdates ? $config['updateDownloadUrl'] . ((int) $_GET['current']) : ''
     ]));
+}
+
+// Сброс прогресса
+elseif ($_GET['action'] === 'resetProgress') {
+    if (!$user = $db->get('users', ['id[Int]', 'cert_saved[Bool]', 'cert_id'], ['token' => $_GET['token']])) {
+        exit(json_encode(['status' => 0, 'error' => 'User not found']));
+    }
+
+    // очистка тестов
+    $db->delete('tests', ['user_id' => $user['id']]);
+
+    // генерация тестов к каждому разделу
+    foreach ($config['categoriesId'] as $categoryId) {
+        $questions = $db->select('questions', 'id[Int]', ['category' => $categoryId]);
+        if (count($questions) < $config['questionsInTest']) {
+            continue;
+        }
+
+        $questionIds = [];
+        for ($i = 0; $i < $config['questionsInTest']; ++$i) {
+            $questionId = -1;
+
+            do {
+                $questionId = $questions[array_rand($questions)];
+            } while (in_array($questionId, $questionIds));
+
+            $questionIds[] = $questionId;
+        }
+
+        $db->insert('tests', [
+            'user_id' => $user['id'],
+            'category' => $categoryId,
+            'questions' => json_encode($questionIds)
+        ]);
+    }
+
+    // удаление сертификата, если такой есть
+    if ($user['cert_saved']) {
+        $db->update('users', [
+            'cert_saved' => 0,
+            'cert_id' => null,
+            'cert_date' => null
+        ], ['id' => $user['id']]);
+
+        unlink(__DIR__ . '/certs/' . $user['cert_id'] . '.png');
+    }
+
+    exit(json_encode(['status' => 1]));
+}
+
+// получение данных от ВК
+elseif ($_GET['action'] === 'exchange') {
+    $jsonParams = file_get_contents('php://input');
+    if (strlen($jsonParams) === 0 || !Utils::isValidJSON($jsonParams)) {
+        exit(json_encode(['status' => 0, 'error' => 'Invalid data']));
+    }
+    $decodedParams = json_decode($jsonParams, true);
+
+    if (!isset($decodedParams['device_id']) || empty($decodedParams['device_id'])) {
+        exit(json_encode(['status' => 0, 'error' => 'Empty device_id']));
+    } elseif (!isset($decodedParams['code']) || empty($decodedParams['code'])) {
+        exit(json_encode(['status' => 0, 'error' => 'Empty code']));
+    } elseif (!isset($decodedParams['code_verifier']) || empty($decodedParams['code_verifier'])) {
+        exit(json_encode(['status' => 0, 'error' => 'Empty code_verifier']));
+    }
+
+    $ch = curl_init();
+
+    curl_setopt($ch, CURLOPT_URL, 'https://oauth.vk.com/access_token');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, 'client_id=' . $config['vk_app_id'] .
+                                         '&client_secret=' . $config['vk_app_secret'] .
+                                         '&code_verifier=' . $decodedParams['code_verifier'] .
+                                         '&device_id=' . $decodedParams['device_id'] .
+                                         '&code=' . $decodedParams['code'] .
+                                         '&redirect_uri=vk' .$config['vk_app_id'] . '://vk.com');
+
+    $headers = array();
+    $headers[] = 'Content-Type: application/x-www-form-urlencoded';
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+    $result = curl_exec($ch);
+    if (curl_errno($ch)) {
+        exit(json_encode(['status' => 0, 'error' => 'Произошла ошибка. Повторите попытку позже']));
+    }
+    curl_close($ch);
+
+    $result = json_decode($result, true);
+    if (!isset($result['access_token'])) {
+        exit(json_encode(['status' => 0, 'error' => 'Произошла ошибка: ' . json_encode($result)]));
+    }
+
+    $token = bin2hex(random_bytes(16));
+    if ($user = $db->get('users', ['id'], ['vk_id' => $result['user_id']])) {
+        $db->update('users', ['token' => $token], ['id' => $user['id']]);
+    } else {
+        $db->insert('users', ['vk_id' => $result['user_id'], 'token' => $token]);
+        $user = $db->get('users', ['id'], ['vk_id' => $result['user_id']]);
+
+        // генерация тестов к каждому разделу
+        foreach ($config['categoriesId'] as $categoryId) {
+            $questions = $db->select('questions', 'id[Int]', ['category' => $categoryId]);
+            if (count($questions) < $config['questionsInTest']) {
+                continue;
+            }
+
+            $questionIds = [];
+            for ($i = 0; $i < $config['questionsInTest']; ++$i) {
+                $questionId = -1;
+
+                do {
+                    $questionId = $questions[array_rand($questions)];
+                } while (in_array($questionId, $questionIds));
+
+                $questionIds[] = $questionId;
+            }
+
+            $db->insert('tests', [
+                'user_id' => $user['id'],
+                'category' => $categoryId,
+                'questions' => json_encode($questionIds)
+            ]);
+        }
+    }
+
+    exit(json_encode(['status' => 1, 'token' => $token]));
+}
+
+// выход
+elseif ($_GET['action'] === 'logout') {
+    if (!$user = $db->get('users', ['id[Int]'], ['token' => $_GET['token']])) {
+        exit(json_encode(['status' => 0, 'error' => 'User not found']));
+    }
+
+    $db->update('users', ['token' => null], ['id' => $user['id']]);
+    exit(json_encode(['status' => 1]));
 }
 
 exit(json_encode(['status' => 0, 'error' => 'Unknown action: ' . $_GET['action']]));

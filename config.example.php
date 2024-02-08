@@ -58,5 +58,15 @@ return [
 	/**
 	 * Максимальное количество запросов за requestTimeInterval от одного пользователя
 	 */
-	'requestMax' => 2
+	'requestMax' => 2,
+
+	/**
+	 * id приложения ВК для входа
+	 */
+	'vk_app_id' => 00000000,
+
+	/**
+	 * Защищенный ключ приложения ВК
+	 */
+	'vk_app_secret' => 'xxxxxxxxxxxxxxxxxxxx'
 ];
